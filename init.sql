@@ -1,0 +1,2 @@
+-- This file is referenced in docker-compose.yml for PostgreSQL initialization
+-- Currently empty, but can be used to run custom SQL on database startup

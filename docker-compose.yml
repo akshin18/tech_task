@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:15
+    container_name: healthcare_db
+    restart: always
+    environment:
+      POSTGRES_DB: healthcare_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  api:
+    build: .
+    container_name: healthcare_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=healthcare_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    depends_on:
+      - db
+    volumes:
+      - ./app:/app/app
+    command: >
+      sh -c "python -c 'import asyncio; from app.db.init_db import init_db; asyncio.run(init_db())' &&
+             python init_db_with_samples.py &&
+             uvicorn app.main:app --host 0.0.0 --port 8000 --reload"
+
+volumes:
+  postgres_data:
